@@ -1,0 +1,70 @@
+/* Apply a clean background */
+body {
+    background-color: #d2f5ff; /* Soft blue background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Center the form inside a container */
+  .form-container {
+    background-color: #ffffff;
+    padding: 25px;
+    width: 400px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Form heading */
+  h2 {
+    text-align: center;
+    color: #0083c6;
+    margin-bottom: 20px;
+  }
+  
+  /* Form structure */
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  label {
+    font-weight: bold;
+    color: #005245;
+  }
+  
+  /* Input field styling */
+  input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #47b8ff;
+    border-radius: 5px;
+    background: #f9fcff;
+  }
+  
+  /* Button styling */
+  button {
+    background-color: #0083c6;
+    color: white;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  
+  button:hover {
+    background-color: #47b8ff;
+  }
+  
+  /* Add spacing */
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+  }
+  

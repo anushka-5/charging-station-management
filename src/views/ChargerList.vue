@@ -1,6 +1,11 @@
 <template>
   <div class="charger-list-container">
     <h2>All Charging Stations</h2>
+     <div class="button-container">
+      <button class="map-button" @click="$router.push('/map')">Map</button>
+
+    </div>
+  
     <button @click="openModal(null)">Add New</button>
 
     <!-- Modal -->
@@ -13,34 +18,52 @@
             <input v-model="newCharger.name" required />
           </label>
           <label>
-            Location:
-            <input v-model="newCharger.location" required />
+            Latitude:
+            <input v-model.number="newCharger.latitude" required type="number" step="any" />
+          </label>
+          <label>
+            Longitude:
+            <input v-model.number="newCharger.longitude" required type="number" step="any" />
           </label>
           <label>
             Status:
             <select v-model="newCharger.status" required>
               <option value="available">Available</option>
               <option value="occupied">Occupied</option>
-              <option value="out_of_service">Out of service</option>
+              <option value="out_of_service">Out of Service</option>
             </select>
           </label>
+          <label>
+            Power Output (kW):
+            <input v-model.number="newCharger.powerOutput" required type="number" />
+          </label>
+          <label>
+            Connector Type:
+            <input v-model="newCharger.connectorType" required />
+          </label>
+
           <button type="submit">{{ isEditing ? 'Update' : 'Submit' }}</button>
           <button type="button" @click="closeModal">Cancel</button>
         </form>
       </div>
     </div>
+
     <div v-if="chargers.length === 0">No chargers found.</div>
 
     <div v-else>
       <p>Total Chargers: {{ chargers.length }}</p>
-
       <ul class="charger-list">
         <li v-for="charger in chargers" :key="charger._id" class="charger-card">
           <h3>{{ charger.name }}</h3>
-          <p><strong>Location:</strong> {{ charger.location }}</p>
+          <p><strong>Coordinates:</strong> ({{ charger.latitude }}, {{ charger.longitude }})</p>
           <p><strong>Status:</strong> {{ charger.status }}</p>
-          <button @click="handleDelete(charger._id)">Delete</button>
-          <button @click="openModal(charger)">Edit</button>
+          <p><strong>Power:</strong> {{ charger.powerOutput }} kW</p>
+          <p><strong>Connector:</strong> {{ charger.connectorType }}</p>
+                    <div class="button-group">
+            <button @click="handleDelete(charger._id)">Delete</button>
+            <button @click="openModal(charger)">Edit</button>
+          </div>
+
         </li>
       </ul>
     </div>
@@ -48,6 +71,7 @@
 </template>
 
 <script>
+import "@/assets/styles/ChargerList.css";
 import createApi from '@/api/axios';
 
 export default {
@@ -58,157 +82,93 @@ export default {
       isEditing: false,
       newCharger: {
         name: '',
-        location: '',
-        status: 'available'
+        latitude: '',
+        longitude: '',
+        status: 'available',
+        powerOutput: '',
+        connectorType: ''
       }
     };
   },
   mounted() {
-    this.fetchChargers(); // ✅ ensure this is here
+    this.fetchChargers();
   },
   methods: {
+    getEmptyCharger() {
+      return {
+        name: '',
+        latitude: '',
+        longitude: '',
+        status: 'available',
+        powerOutput: '',
+        connectorType: ''
+      };
+    },
     openModal(charger = null) {
-      if (charger) {
-        this.newCharger = { ...charger }; // Pre-fill with existing charger data\
-        this.isEditing = true; // Set editing mode
-      } else {
-        this.isEditing = false; // Reset to add mode
-        this.newCharger = { name: '', location: '', status: 'Available' }; // Reset for new charger
-      }
       this.showModal = true;
+      if (charger) {
+        this.newCharger = { ...charger };
+        this.isEditing = true;
+      } else {
+        this.newCharger = this.getEmptyCharger();
+        this.isEditing = false;
+      }
     },
     closeModal() {
       this.showModal = false;
-      this.isEditing = false; // Reset editing state
-      this.newCharger = { name: '', location: '', status: 'Available' };
+      this.newCharger = this.getEmptyCharger();
+      this.isEditing = false;
     },
     async handleCharger() {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('You must be logged in to perform this action.');
+        alert('You must be logged in.');
         this.$router.push('/login');
         return;
       }
       const api = createApi(token);
 
       try {
-        // console.log({...this.newCharger}); // Debugging line
-
         if (this.isEditing) {
           const res = await api.put(`/charging-points/${this.newCharger._id}`, this.newCharger);
-
-          if(res.status == 200) {
-            // Replace the old charger in the list
-            this.chargers = this.chargers.map(currentCharger =>
-            currentCharger._id === this.newCharger._id ? res.data : currentCharger
-            );
-          }
+          this.chargers = this.chargers.map(c =>
+            c._id === this.newCharger._id ? res.data : c
+          );
         } else {
           const res = await api.post('/charging-points', this.newCharger);
-
-          this.chargers.push(res.data); // Add new charger
+          this.chargers.push(res.data);
         }
         this.closeModal();
       } catch (err) {
-        console.error('Error adding charger', err);
-        alert('Failed to add charger');
+        console.error('Error handling charger:', err);
+        alert('An error occurred. Please try again.');
       }
     },
     async fetchChargers() {
       const token = localStorage.getItem('token');
       const api = createApi(token);
-
       try {
         const res = await api.get('/charging-points');
         this.chargers = res.data;
       } catch (err) {
-        console.error('Network error', err);
+        console.error('Failed to fetch chargers:', err);
       }
     },
-    async handleDelete(chargerId) {
+    async handleDelete(id) {
       const token = localStorage.getItem('token');
       const api = createApi(token);
-
       try {
-        const response = await api.delete(`/charging-points/${chargerId}`);
-        if (response.status === 200) {
-          this.chargers = this.chargers.filter(charger => charger._id !== chargerId);
+        const res = await api.delete(`/charging-points/${id}`);
+        if (res.status === 200) {
+          this.chargers = this.chargers.filter(c => c._id !== id);
         } else {
-          alert('Failed to delete charger');
+          alert('Delete failed.');
         }
       } catch (err) {
-        console.error('Error deleting charger', err);
+        console.error('Error deleting charger:', err);
       }
     }
   }
-
 };
 </script>
 
-<style scoped>
-.charger-list-container {
-  padding: 20px;
-  background-color: #c4fcef;
-  min-height: 100vh;
-}
-
-h2 {
-  color: #005245;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.charger-list {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-}
-
-.charger-card {
-  background-color: #ffffff;
-  border: 2px solid #4d8076;
-  border-radius: 10px;
-  padding: 20px;
-  color: #005245;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  min-width: 300px;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-}
-
-.modal-content form {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.modal-content input,
-.modal-content select {
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-</style>

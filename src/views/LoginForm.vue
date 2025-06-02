@@ -18,6 +18,7 @@
 </template>
 
 <script>
+import "@/assets/styles/Login.css";
 import createApi from '@/api/axios';
 export default {
   name: 'LoginFormView',
@@ -59,77 +60,4 @@ export default {
 };
 </script>
 
-<style scoped>
 
-*{
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-.login-container {
-  background-color: #c4fcef;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.login-form {
-  background-color: #ffffff;
-  border: 2px solid #4d8076;
-  border-radius: 10px;
-  padding: 30px;
-  width: 320px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-h2 {
-  text-align: center;
-  color: #005245;
-}
-
-.link{
-  text-align: center;
-  margin-top: 15px;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  color: #005245;
-  margin-bottom: 5px;
-}
-
-input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #4d8076;
-  border-radius: 5px;
-}
-
-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #005245;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #4d8076;
-}
-
-.error {
-  color: red;
-  margin-top: 10px;
-  text-align: center;
-}
-</style>
