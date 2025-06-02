@@ -29,10 +29,6 @@
       <button @click="clearFilters" style="margin-left: 10px;">Clear Filters</button>
     </div>
 
-    <div class="button-container">
-      <button class="map-button" @click="$router.push('/map')">Map</button>
-    </div>
-
     <button @click="openModal(null)">Add New</button>
 
     <!-- Modal -->
@@ -44,14 +40,20 @@
             Name:
             <input v-model="newCharger.name" required />
           </label>
+
           <label>
-            Latitude:
-            <input v-model.number="newCharger.latitude" required type="number" step="any" />
+            City (optional):
+            <input type="text" v-model="citySearch" @change="geocodeCity"
+              placeholder="Enter city name to auto-fill location" />
           </label>
+
           <label>
-            Longitude:
-            <input v-model.number="newCharger.longitude" required type="number" step="any" />
+            Select Location:
+            <div id="location-map" style="height: 300px; margin-top: 10px;"></div>
           </label>
+          <p>Selected Coordinates: ({{ newCharger.latitude }}, {{ newCharger.longitude }})</p>
+
+
           <label>
             Status:
             <select v-model="newCharger.status" required>
@@ -98,6 +100,8 @@
 
 <script>
 import "@/assets/styles/ChargerList.css";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 import createApi from '@/api/axios';
 
 export default {
@@ -143,21 +147,100 @@ export default {
         connectorType: ''
       };
     },
+    async geocodeCity() {
+      if (!this.citySearch) return;
+
+      try {
+        const query = encodeURIComponent(this.citySearch);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?city=${query}&format=json&limit=1`);
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          const { lat, lon } = data[0];
+          this.newCharger.latitude = parseFloat(lat);
+          this.newCharger.longitude = parseFloat(lon);
+
+          // Update map marker
+          if (this.locationMarker && this.locationMap) {
+            const latLng = [parseFloat(lat), parseFloat(lon)];
+            this.locationMarker.setLatLng(latLng);
+            this.locationMap.setView(latLng, 12);
+          }
+        } else {
+          alert('City not found. Please try a different name.');
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        alert('Failed to fetch location from city name.');
+      }
+    },
+    initLocationMap(lat = 20.5937, lng = 78.9629) {
+      if (this.locationMap) {
+        this.locationMap.off();
+        this.locationMap.remove();
+        this.locationMap = null;
+        this.locationMarker = null;
+      }
+
+      this.locationMap = L.map('location-map').setView([lat, lng], 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(this.locationMap);
+
+      this.locationMarker = L.marker([lat, lng], { draggable: true }).addTo(this.locationMap);
+
+      this.locationMarker.on('dragend', () => {
+        const { lat, lng } = this.locationMarker.getLatLng();
+        this.newCharger.latitude = lat;
+        this.newCharger.longitude = lng;
+      });
+
+      this.locationMap.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        this.newCharger.latitude = lat;
+        this.newCharger.longitude = lng;
+        this.locationMarker.setLatLng([lat, lng]);
+      });
+    }
+    ,
     openModal(charger = null) {
       this.showModal = true;
+
       if (charger) {
         this.newCharger = { ...charger };
         this.isEditing = true;
+        this.citySearch = '';  // or could set to city name if you store it, else empty
+
       } else {
         this.newCharger = this.getEmptyCharger();
         this.isEditing = false;
+        this.citySearch = '';
       }
-    },
+
+      this.$nextTick(() => {
+        this.initLocationMap(
+          this.newCharger.latitude || 20.5937,
+          this.newCharger.longitude || 78.9629
+        );
+      });
+    }
+
+    ,
     closeModal() {
-      this.showModal = false;
-      this.newCharger = this.getEmptyCharger();
-      this.isEditing = false;
-    },
+  this.showModal = false;
+  this.newCharger = this.getEmptyCharger();
+  this.citySearch = '';
+  this.isEditing = false;
+
+  if (this.locationMap) {
+    this.locationMap.off();
+    this.locationMap.remove();
+    this.locationMap = null;
+    this.locationMarker = null;
+  }
+}
+,
     async handleCharger() {
       const token = localStorage.getItem('token');
       if (!token) {
