@@ -1,7 +1,7 @@
 <template>
   <div class="charger-list-container">
     <h2>All Charging Stations</h2>
-    
+
     <!-- Filter UI -->
     <div class="filter-container" style="margin-bottom: 20px;">
       <h3>Filter Chargers</h3>
@@ -32,7 +32,7 @@
     <div class="button-container">
       <button class="map-button" @click="$router.push('/map')">Map</button>
     </div>
-  
+
     <button @click="openModal(null)">Add New</button>
 
     <!-- Modal -->
@@ -122,7 +122,15 @@ export default {
     };
   },
   mounted() {
-    this.fetchChargers();
+    const { status, powerOutput, connectorType } = this.$route.query;
+    this.filters = {
+      status: status || '',
+      powerOutput: powerOutput || '',
+      connectorType: connectorType || '',
+    };
+    this.fetchFilteredChargers();
+
+
   },
   methods: {
     getEmptyCharger() {
@@ -175,16 +183,16 @@ export default {
         alert('An error occurred. Please try again.');
       }
     },
-    async fetchChargers() {
-      const token = localStorage.getItem('token');
-      const api = createApi(token);
-      try {
-        const res = await api.get('/charging-points');
-        this.chargers = res.data;
-      } catch (err) {
-        console.error('Failed to fetch chargers:', err);
-      }
-    },
+    // async fetchChargers() {
+    //   const token = localStorage.getItem('token');
+    //   const api = createApi(token);
+    //   try {
+    //     const res = await api.get('/charging-points');
+    //     this.chargers = res.data;
+    //   } catch (err) {
+    //     console.error('Failed to fetch chargers:', err);
+    //   }
+    // },
     async fetchFilteredChargers() {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -200,6 +208,9 @@ export default {
         if (this.filters.powerOutput) params.powerOutput = this.filters.powerOutput;
         if (this.filters.connectorType) params.connectorType = this.filters.connectorType;
 
+        // Update URL with query params
+        this.$router.push({ query: params });
+
         const res = await api.get('/charging-points/filter', { params });
         this.chargers = res.data;
       } catch (err) {
@@ -213,8 +224,10 @@ export default {
         powerOutput: '',
         connectorType: '',
       };
-      this.fetchChargers();
-    },
+      this.$router.push({ query: {} }); // Clear URL query
+      this.fetchFilteredChargers();
+    }
+    ,
     async handleDelete(id) {
       const token = localStorage.getItem('token');
       const api = createApi(token);
