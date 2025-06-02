@@ -1,9 +1,36 @@
 <template>
   <div class="charger-list-container">
     <h2>All Charging Stations</h2>
-     <div class="button-container">
-      <button class="map-button" @click="$router.push('/map')">Map</button>
+    
+    <!-- Filter UI -->
+    <div class="filter-container" style="margin-bottom: 20px;">
+      <h3>Filter Chargers</h3>
+      <label>
+        Status:
+        <select v-model="filters.status">
+          <option value="">All</option>
+          <option value="available">Available</option>
+          <option value="occupied">Occupied</option>
+          <option value="out_of_service">Out of Service</option>
+        </select>
+      </label>
 
+      <label>
+        Min Power Output (kW):
+        <input type="number" v-model.number="filters.powerOutput" min="0" />
+      </label>
+
+      <label>
+        Connector Type:
+        <input type="text" v-model="filters.connectorType" placeholder="Connector Type" />
+      </label>
+
+      <button @click="fetchFilteredChargers">Apply Filters</button>
+      <button @click="clearFilters" style="margin-left: 10px;">Clear Filters</button>
+    </div>
+
+    <div class="button-container">
+      <button class="map-button" @click="$router.push('/map')">Map</button>
     </div>
   
     <button @click="openModal(null)">Add New</button>
@@ -59,11 +86,10 @@
           <p><strong>Status:</strong> {{ charger.status }}</p>
           <p><strong>Power:</strong> {{ charger.powerOutput }} kW</p>
           <p><strong>Connector:</strong> {{ charger.connectorType }}</p>
-                    <div class="button-group">
+          <div class="button-group">
             <button @click="handleDelete(charger._id)">Delete</button>
             <button @click="openModal(charger)">Edit</button>
           </div>
-
         </li>
       </ul>
     </div>
@@ -85,6 +111,11 @@ export default {
         latitude: '',
         longitude: '',
         status: 'available',
+        powerOutput: '',
+        connectorType: ''
+      },
+      filters: {
+        status: '',
         powerOutput: '',
         connectorType: ''
       }
@@ -154,6 +185,36 @@ export default {
         console.error('Failed to fetch chargers:', err);
       }
     },
+    async fetchFilteredChargers() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in.');
+        this.$router.push('/login');
+        return;
+      }
+      const api = createApi(token);
+
+      try {
+        const params = {};
+        if (this.filters.status) params.status = this.filters.status;
+        if (this.filters.powerOutput) params.powerOutput = this.filters.powerOutput;
+        if (this.filters.connectorType) params.connectorType = this.filters.connectorType;
+
+        const res = await api.get('/charging-points/filter', { params });
+        this.chargers = res.data;
+      } catch (err) {
+        console.error('Error fetching filtered chargers:', err);
+        alert('Failed to fetch filtered chargers.');
+      }
+    },
+    clearFilters() {
+      this.filters = {
+        status: '',
+        powerOutput: '',
+        connectorType: '',
+      };
+      this.fetchChargers();
+    },
     async handleDelete(id) {
       const token = localStorage.getItem('token');
       const api = createApi(token);
@@ -171,4 +232,3 @@ export default {
   }
 };
 </script>
-
