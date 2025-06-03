@@ -9,9 +9,9 @@ const createApi = (token = null) => {
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-
+        let baseURL = process.env.VUE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
         return axios.create({
-            baseURL: 'http://localhost:3000/api', // Update for production later
+            baseURL: baseURL||'http://localhost:3000/api',
             headers,
         });
     } catch (error) {
