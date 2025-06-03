@@ -11,7 +11,7 @@ const createApi = (token = null) => {
         }
         let baseURL = process.env.VITE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
         return axios.create({
-            baseURL: "https://charging-station-backend-fdkt.onrender.com,
+            baseURL: "https://charging-station-backend-fdkt.onrender.com",
             headers,
         });
     } catch (error) {
