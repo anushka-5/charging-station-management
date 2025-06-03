@@ -9,7 +9,7 @@ const createApi = (token = null) => {
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        let baseURL = process.env.VUE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
+        let baseURL = process.env.VITE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
         return axios.create({
             baseURL: baseURL||'http://localhost:3000/api',
             headers,
