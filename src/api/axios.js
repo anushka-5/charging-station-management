@@ -9,7 +9,7 @@ const createApi = (token = null) => {
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }
-        let baseURL = process.env.VITE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
+        // let baseURL = process.env.VITE_BACKEND_API_URL + '/api'; // Use environment variable for base URL
         return axios.create({
             baseURL: "https://charging-station-backend-fdkt.onrender.com",
             headers,
